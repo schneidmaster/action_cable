@@ -1,13 +1,11 @@
 message_types = require('./internal').message_types
-ConnectionMonitor = require('./connection_monitor')
 
+# Encapsulate the cable connection held by the consumer. This is an internal class not intended for direct user manipulation.
 class Connection
   @reopenDelay: 500
 
   constructor: (@consumer) ->
-    {@subscriptions} = @consumer
-    @monitor = new ConnectionMonitor(@)
-    @disconnected = true
+    @open()
 
   send: (data) ->
     if @isOpen()
@@ -17,21 +15,19 @@ class Connection
       false
 
   open: =>
-    if @isActive()
-      throw new Error('Existing connection must be closed before opening')
+    if @isAlive()
+      throw new Error("Existing connection must be closed before opening")
     else
       @uninstallEventHandlers() if @webSocket?
       @webSocket = new WebSocket(@consumer.url)
       @installEventHandlers()
-      @monitor.start()
       true
 
-  close: ({allowReconnect} = {allowReconnect: true}) ->
-    @monitor.stop() unless allowReconnect
-    @webSocket?.close() if @isActive()
+  close: ->
+    @webSocket?.close()
 
   reopen: ->
-    if @isActive()
+    if @isAlive()
       try
         @close()
       finally
@@ -39,16 +35,13 @@ class Connection
     else
       @open()
 
-  getProtocol: ->
-    @webSocket?.protocol
-
   isOpen: ->
     @isState("open")
 
-  isActive: ->
-    @isState("open", "connecting")
-
   # Private
+
+  isAlive: ->
+    @webSocket? and not @isState("closing", "closed")
 
   isState: (states...) ->
     @getState() in states
@@ -71,29 +64,28 @@ class Connection
   events:
     message: (event) ->
       {identifier, message, type} = JSON.parse(event.data)
+
       switch type
-        when message_types.welcome
-          @monitor.recordConnect()
-          @subscriptions.reload()
-        when message_types.ping
-          @monitor.recordPing()
         when message_types.confirmation
-          @subscriptions.notify(identifier, "connected")
+          @consumer.subscriptions.notify(identifier, "connected")
         when message_types.rejection
-          @subscriptions.reject(identifier)
+          @consumer.subscriptions.reject(identifier)
         else
-          @subscriptions.notify(identifier, "received", message)
+          @consumer.subscriptions.notify(identifier, "received", message)
 
     open: ->
       @disconnected = false
+      @consumer.subscriptions.reload()
 
-    close: (event) ->
-      return if @disconnected
-      @disconnected = true
-      @monitor.recordDisconnect()
-      @subscriptions.notifyAll("disconnected", {willAttemptReconnect: @monitor.isRunning()})
+    close: ->
+      @disconnect()
 
     error: ->
-      #
+      @disconnect()
+
+  disconnect: ->
+    return if @disconnected
+    @disconnected = true
+    @consumer.subscriptions.notifyAll("disconnected")
 
 module.exports = Connection

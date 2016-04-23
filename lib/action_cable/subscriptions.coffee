@@ -1,3 +1,4 @@
+identifiers = require('./internal').identifiers
 Subscription = require('./subscription')
 
 class Subscriptions
@@ -6,48 +7,43 @@ class Subscriptions
 
   create: (channelName, mixin) ->
     channel = channelName
-    params = if typeof channel is 'object' then channel else {channel}
-    subscription = new Subscription(@consumer, params, mixin)
-    @add(subscription)
+    params = if typeof channel is "object" then channel else {channel}
+    new Subscription(@, params, mixin)
 
   # Private
 
   add: (subscription) ->
     @subscriptions.push(subscription)
-    @consumer.ensureActiveConnection()
-    @notify(subscription, 'initialized')
-    @sendCommand(subscription, 'subscribe')
-    subscription
+    @notify(subscription, "initialized")
+    @sendCommand(subscription, "subscribe")
 
   remove: (subscription) ->
     @forget(subscription)
+
     unless @findAll(subscription.identifier).length
-      @sendCommand(subscription, 'unsubscribe')
-    subscription
+      @sendCommand(subscription, "unsubscribe")
 
   reject: (identifier) ->
     for subscription in @findAll(identifier)
       @forget(subscription)
-      @notify(subscription, 'rejected')
-      subscription
+      @notify(subscription, "rejected")
 
   forget: (subscription) ->
     @subscriptions = (s for s in @subscriptions when s isnt subscription)
-    subscription
 
   findAll: (identifier) ->
     s for s in @subscriptions when s.identifier is identifier
 
   reload: ->
     for subscription in @subscriptions
-      @sendCommand(subscription, 'subscribe')
+      @sendCommand(subscription, "subscribe")
 
   notifyAll: (callbackName, args...) ->
     for subscription in @subscriptions
       @notify(subscription, callbackName, args...)
 
   notify: (subscription, callbackName, args...) ->
-    if typeof subscription is 'string'
+    if typeof subscription is "string"
       subscriptions = @findAll(subscription)
     else
       subscriptions = [subscription]
@@ -57,6 +53,9 @@ class Subscriptions
 
   sendCommand: (subscription, command) ->
     {identifier} = subscription
-    @consumer.send({command, identifier})
+    if identifier is identifiers.ping
+      @consumer.connection.isOpen()
+    else
+      @consumer.send({command, identifier})
 
 module.exports = Subscriptions
