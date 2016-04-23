@@ -1,0 +1,27 @@
+{
+  "name": "action-cable",
+  "description": "Port of Rails 5 ActionCable client",
+  "main": "dist/action_cable.js",
+  "authors": [
+    "Zach Schneider <zach@schneid.io>"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "rails",
+    "actioncable"
+  ],
+  "homepage": "https://github.com/schneidmaster/action-cable",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "lib",
+    "node_modules",
+    ".npmignore",
+    "bower.coffee",
+    "Gulpfile.coffee",
+    "index.js",
+    "package.json",
+    "version.js",
+    "webpack.config.coffee"
+  ]
+}
