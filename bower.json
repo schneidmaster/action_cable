@@ -1,5 +1,5 @@
 {
-  "name": "action-cable",
+  "name": "action_cable",
   "description": "Port of Rails 5 ActionCable client",
   "main": "dist/action_cable.js",
   "authors": [
@@ -10,7 +10,7 @@
     "rails",
     "actioncable"
   ],
-  "homepage": "https://github.com/schneidmaster/action-cable",
+  "homepage": "https://github.com/schneidmaster/action_cable",
   "moduleType": [],
   "ignore": [
     "**/.*",
