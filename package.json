@@ -1,6 +1,6 @@
 {
   "name": "action_cable",
-  "version": "5.0.0.beta3",
+  "version": "5.0.0-beta3",
   "description": "Port of Rails 5 ActionCable client.",
   "main": "index.js",
   "scripts": {
