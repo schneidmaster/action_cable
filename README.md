@@ -1,3 +1,7 @@
+# Deprecated
+
+Use [actioncable-modules](https://github.com/schneidmaster/actioncable-modules) instead for Rails 5.0.0 stable and beyond.
+
 # ActionCable
 
 Port of Rails 5 ActionCable
